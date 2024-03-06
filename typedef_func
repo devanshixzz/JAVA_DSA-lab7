@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// (a) typedef for representing a job
+typedef struct {
+    int id;    // Identification number
+    int size;  // Job size (time needed for completion)
+} Job;
+
+// (b) typedef for representing a queue of jobs using an array
+#define MAX_SIZE 100  // Define the maximum size of the queue
+
+typedef struct {
+    Job jobs[MAX_SIZE];  // Array to store jobs
+    int front;            // Index of the front element
+    int rear;             // Index of the rear element
+} JobQueue;
+
+// (c) Function prototypes
+int empty(const JobQueue *queue);
+void enqueue(JobQueue *queue, const Job *job);
+Job front(const JobQueue *queue);
+void dequeue(JobQueue *queue);
+
+// (d) Function to process jobs using Round-Robin strategy
+void roundRobin(JobQueue *queue, int timeSlice) {
+    while (!empty(queue)) {
+        Job currentJob = front(queue);
+        // Process the job for the time slice or until completion
+        int timeProcessed = (timeSlice < currentJob.size) ? timeSlice : currentJob.size;
+        // Output information or perform other processing as needed
+        printf("Processing Job %d for %d units of time.\n", currentJob.id, timeProcessed);
+        // Update the job size and enqueue if not completed
+        currentJob.size -= timeProcessed;
+        if (currentJob.size > 0) {
+            enqueue(queue, &currentJob);
+        }
+        // Remove the front job from the queue
+        dequeue(queue);
+    }
+}
+
+// Function to check if the queue is empty
+int empty(const JobQueue *queue) {
+    return queue->front == queue->rear;
+}
+
+// Function to enqueue a job into the queue
+void enqueue(JobQueue *queue, const Job *job) {
+    // Check for queue overflow
+    if ((queue->rear + 1) % MAX_SIZE == queue->front) {
+        printf("Queue overflow! Cannot enqueue more jobs.\n");
+        return;
+    }
+    // Enqueue the job at the rear
+    queue->jobs[queue->rear] = *job;
+    queue->rear = (queue->rear + 1) % MAX_SIZE;
+}
+
+// Function to get the front job from the queue
+Job front(const JobQueue *queue) {
+    Job emptyJob = {-1, 0}; // A job with a negative identification number
+    // Check if the queue is empty
+    if (empty(queue)) {
+        return emptyJob;
+    }
+    // Return the job at the front
+    return queue->jobs[queue->front];
+}
+
+// Function to dequeue the front job from the queue
+void dequeue(JobQueue *queue) {
+    // Check if the queue is empty
+    if (empty(queue)) {
+        printf("Queue is empty! Cannot dequeue.\n");
+        return;
+    }
+    // Dequeue the front job
+    queue->front = (queue->front + 1) % MAX_SIZE;
+}
+
+int main() {
+    // Example usage
+    JobQueue jobQueue = {{}, 0, 0};  // Initialize an empty queue
+    // Enqueue some jobs
+    enqueue(&jobQueue, &(Job){1, 5});
+    enqueue(&jobQueue, &(Job){2, 8});
+    enqueue(&jobQueue, &(Job){3, 3});
+    // Process jobs using Round-Robin with a time slice of 4
+    roundRobin(&jobQueue, 4);
+    return 0;
+}
